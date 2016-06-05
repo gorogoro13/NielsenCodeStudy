@@ -1,0 +1,32 @@
+\documentclass[11pt,a4j,fleqn]{jarticle}  
+
+%\usepackage[dvips]{graphicx}[dvipdfmx]
+\usepackage[dvipdfmx]{graphicx}
+%自動的に番号を振るマクロ 
+\newcounter{apart}
+
+\begin{document}
+
+\title{
+	\textbf{\Large  Michael Nielsen のニューラルネットワーク\\
+	\bigskip
+	数式とソースコード}\\
+	\bigskip
+}
+
+\bigskip
+\bigskip
+\author{なかじま　ひでき}
+\date{\today}
+\maketitle
+%\renewcommand{\theapart}[1][]{\refstepcounter{apart}#1[Part{\theapart]：}
+\renewcommand{\theapart}{\Alph{apart}}
+\setcounter{apart}{1}
+
+\textbf{\Large \theapart ：理論と実装}
+\refstepcounter{apart}
+
+\section{ネットワークモデルと数学添字と配列添字}
+\subsection{ネットワークモデルと数学添字} 
+
+\end{document}

@@ -1,0 +1,725 @@
+ 
+\documentclass[11pt,a4j,fleqn]{jarticle}  
+
+%\usepackage[dvips]{graphicx}[dvipdfmx]
+\usepackage[dvipdfmx]{graphicx}
+%自動的に番号を振るマクロ 
+\newcounter{apart}
+
+\begin{document}
+
+\title{
+	\textbf{\Large  Michael Nielsen による\\
+	\bigskip
+	ニューラルネットワークと深層学習}\\
+	\bigskip
+}
+\maketitle
+\begin{verbatim}
+　"network.py"のトレースと解説をせよ。
+実行は
+net = network.Network([784, 30, 10])
+net.SGD(training_data, 30, 10, 3.0)
+としたものとする。
+\end{verbatim}
+\bigskip
+\bigskip
+
+%\renewcommand{\theapart}[1][]{\refstepcounter{apart}#1[Part{\theapart]：}
+\renewcommand{\theapart}{\Alph{apart}}
+\setcounter{apart}{1}
+
+\textbf{\Large \theapart ：理論と実装}
+\refstepcounter{apart}
+
+\section{ネットワークモデルと数学添字と配列添字}
+\subsection{ネットワークモデルと数学添字}
+\begin{figure}[htbp]
+ \begin{minipage}{0.5\hsize}
+  \begin{center}
+   \includegraphics[width=45mm]{./tikz17.eps}
+  \end{center}
+  \caption{バイアス(俺様度数) $b^l_{j}$}
+ % \label{fig:one}
+ \end{minipage}
+ \begin{minipage}{0.5\hsize}
+  \begin{center}
+   \includegraphics[width=95mm]{./tikz16.eps}
+  \end{center}
+  \caption{重み(何様度数) $w^l_{jk}$}
+ % \label{fig:two}
+ \end{minipage}
+\end{figure}
+%\begin{verbatim}
+ \hspace{2mm} 数学添字 l : レイヤー番号。入力層を１として出力側に向かって１，２と増える。 \\
+ \hspace{5mm} 数学添字 j : l番レイヤーのj番のニューロン \\
+ \hspace{5mm} 数学添字 k : (l-1)番レイヤーのk番のニューロン \\
+ \\
+ したがって、$w^l_{jk}$は２番レイヤー以降に定義される。また、ネットワークモデルの図を眺めてみると$w^l_{jk}$はレイヤーではなくレイヤーとレイヤーを繋ぐ線を指し示している。この線を表す概念を実装して「重み」を定義することも考えられるが$network.py$においては実装せずにレイヤーを基準に考える。\\
+%\end{verbatim}
+
+\subsection{数学添字と配列添字}
+ \hspace{1mm} $b^l_{j} \hspace{1mm} のバイアス値 \hspace{1mm} = self.biases[\hspace{1mm} l-1 \hspace{1mm}][\hspace{1mm} j-1 \hspace{1mm}]$　\\
+ \hspace{5mm} $w^l_{jk} \hspace{1mm} の重み \hspace{10mm} = self.weights[\hspace{1mm} s \hspace{1mm}][\hspace{1mm} j-1 \hspace{1mm}][\hspace{1mm} k-1 \hspace{1mm}]$　\\
+ \hspace{75mm} ただし、$ s= l-2 \hspace{2mm}( s>=0 \hspace{2mm}∴l>=2 )$　\\
+ \hspace{2mm} 配列添字 s : (s+2)番のレイヤー。ｓ＝０（ゼロ）は2層目に属することをを示す。 \\
+ \hspace{3mm}また、sに続く添字は数学添字と同じj,kを使用するが、python-listのs番目に属するndarrayの添字である。\\
+
+----［注意ポイント］-----------------------------------------------------------\\
+数学添字から素直に導かれる配列添字は\\
+\\
+\hspace{2mm} $b^l_{j} \hspace{1mm} のバイアス値 \hspace{1mm} = self.biases[\hspace{1mm} l \hspace{1mm}][\hspace{1mm} j \hspace{1mm}]$　\\
+\hspace{2mm} $w^l_{jk} \hspace{1mm} の重み \hspace{10mm} = self.weights[\hspace{1mm} l \hspace{1mm}][\hspace{1mm} j \hspace{1mm}][\hspace{1mm} k \hspace{1mm}]$　\\
+\\
+となるだろう。直感的理解にはこちらでよいが、ソースコードを読解するときには添字のズレが2つの要因によって起こる。\\
+◆「数学添字」においては、レイヤー番号\hspace{1mm}$l$\hspace{1mm}を基準に$j$($l$レイヤーのニューロン番号)と$k$(($l-1)$レイヤーのニューロン番号)が定められる。「重み」についてはこのことが重要である。\\
+◆実装においては、重みとバイアスのレイヤー番号$l$はpythonのlistやndarrayの生成時の添字にしたがって０から始まり、0，1・・・の順になっている。この時点で数学添字との間には０⇔１のずれがある。\\
+さらに「重み」は中間層から出力層にかけて定義可能なので$l>=2$。従って$network.py$における「数学添字と配列添字」の関係は、\\
+\hspace{5mm} $w^l_{jk} \hspace{1mm} の重み \hspace{10mm} = self.weights[\hspace{1mm} l \hspace{1mm}][\hspace{1mm} j \hspace{1mm}][\hspace{1mm} k \hspace{1mm}]$　\\
+の表記まま解釈すると、数学表記の$l$は1，2，3・・・と１から始まる（つまり入力層は$l = 1$）のに対して配列添字は0，1，2・・・であって数学添字の$l = 1$＝入力層は配列添字では中間層を示すと解釈する。しかし、実際にlistやndarrayの添字はこの制限を課しておらず$self.weights$の$l$は０から始まる。これはいかにも混乱を招く。ここでは、明示的に表記しておくほうが良いだろう\\
+$ s= l-2( s>=0 ∴l>=2 )$と定義して重みが数学添字$l$の2層目からしか存在しないことを明示し\\
+「配列添字の特性を考慮した重み」\\
+\\
+\hspace{5mm} $w^l_{jk} \hspace{1mm} の重み \hspace{10mm} = self.weights[\hspace{1mm} s \hspace{1mm}][\hspace{1mm} t \hspace{1mm}][\hspace{1mm} u \hspace{1mm}]$　\\
+ \hspace{40mm} ただし、$ s= l-2( s>=0 ∴l>=2 )$　\\
+ \hspace{2mm} 配列添字 s : (s+2)番のレイヤー。ｓ＝０（ゼロ）は2層目に属することをを示す。 \\
+ \hspace{2mm} 配列添字 t : (s+2)番レイヤーの(t+1)番のニューロン \\
+ \hspace{2mm} 配列添字 u : (s+1)番レイヤーの(u+1)番のニューロン \\
+\\
+t+1,u+1はプログラムでは添字が０から始まることの反映でさして気に留める必要もない。\\
+バイアスについても考慮すべきは添字が０から始まることのみなので、$l-1, j-1$で表記する。この表記に従って「配列添字の特性を考慮した重み」を書き直す\\
+----(再掲)--------------------------------------------------------------------------------\\
+ \hspace{2mm} $b^l_{j} \hspace{1mm} のバイアス値 \hspace{1mm} = self.biases[\hspace{1mm} l-1 \hspace{1mm}][\hspace{1mm} j-1 \hspace{1mm}]$　\\
+ \hspace{2mm} $w^l_{jk} \hspace{1mm} の重み \hspace{10mm} = self.weights[\hspace{1mm} s \hspace{1mm}][\hspace{1mm} j-1 \hspace{1mm}][\hspace{1mm} k-1 \hspace{1mm}]$　\\
+ \hspace{75mm} ただし、$ s= l-2 \hspace{2mm}( s>=0 \hspace{2mm}∴l>=2 )$　\\
+ \hspace{2mm} 配列添字 s : (s+2)番のレイヤー。ｓ＝０（ゼロ）は2層目に属することをを示す。 \\
+ \hspace{3mm}また、sに続く添字は数学添字と同じj,kを使用するが、python-listのs番目に属するndarrayの添字である。\\
+------------------------------------------------------------------------------------------\\
+%\newpage
+
+\textbf{\Large \theapart ：SGD(確率的勾配下降法)とコーディング}
+\refstepcounter{apart}
+\section{逆伝播}
+\subsection{逆伝播アルゴリズム}
+\subsection{逆伝播の課題}
+\section{バッチ学習}
+\subsection{理論的裏付け}
+\subsection{バッチ学習のアルゴリズム}
+\section{SGD 確率的勾配下降法}
+
+\newpage
+\textbf{\Large \theapart ：リファレンス}
+\refstepcounter{apart}
+
+\section{Networkクラス：ニューロンネットワークの作成}
+\begin{verbatim}
+     def __init__(self, sizes):
+        self.num_layers = len(sizes)
+        self.sizes = sizes
+        self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
+        self.weights = [np.random.randn(y, x)
+                        for x, y in zip(sizes[:-1], sizes[1:])]
+\end{verbatim}
+\subsubsection{引数}
+  sizes…各レーヤーのニューロン数をリストにしたもの。 sizes=[784, 30, 10]ならば、\\
+  入力層784，中間層30，出力層10　のニューロンネットワークを作成する。
+\subsection{生成されるインスタンス変数（クラス変数）}
+\begin{description}
+  \item [self.num\_layers] レイヤー数
+  \item[self.sizes] コンストラクタで使用した各層のニューロン数のリスト
+  \item[self.biases] 各ニューロンの「バイアス」を格納したndarray　『俺様度数』
+  \item[self.weights]隣接前層の各ニューロンから送られる$a^{l-1}$をどれだけ重視するかの「重み」を格納したndarray　『何様度数』
+\end{description}
+%\newpage
+
+\section{順伝播}
+\subsection{feedforward(self, a)}
+\begin{verbatim}
+     def feedforward(self, a):
+        for b, w in zip(self.biases, self.weights):
+            a = sigmoid(np.dot(w, a)+b)
+        return a
+\end{verbatim}
+\subsubsection{引数 }
+a (activations)…隣接前レイヤー$(l-1)$のニューロンの活性ベクトル$a^l_{k}$\\
+ndarray型で値の参照は、 a[0][$k-1$]\\
+入力レイヤーにおいては入力値を格納する。ネットワークモデルのように複数のレーヤーの値は格納しない。
+\subsubsection{戻値}
+a …当該レイヤー$l$のニューロンの活性ベクトル$a^l_{j}$\\
+ndarray型で値の参照は、  a[0][$j-1$])
+\subsubsection{実行内容}
+たった2行であるが、下記のコードで隣接前レイヤーの出力ベクトル$a$から該当レイヤーの出力ベクトル$a$を返す。\\
+\begin{verbatim}
+        for b, w in zip(self.biases, self.weights):
+            a = sigmoid(np.dot(w, a)+b)
+\end{verbatim}
+
+\section{逆伝播}
+\subsection{SGD(self, training\_data, epochs, mini\_batch\_size, eta,
+            test\_data=None)}
+\begin{verbatim}
+     def SGD(self, training_data, epochs, mini_batch_size, eta,
+            test_data=None):
+        if test_data: n_test = len(test_data)
+        n = len(training_data)
+        for j in xrange(epochs):
+            random.shuffle(training_data)
+            mini_batches = [
+                training_data[k:k+mini_batch_size]
+                for k in xrange(0, n, mini_batch_size)]
+            for mini_batch in mini_batches:
+\end{verbatim}            
+\verb|                |{\Large \bf self.update\_mini\_batch(mini\_batch, eta)}
+\begin{verbatim}
+            if test_data:
+                print "Epoch {0}: {1} / {2}".format(
+                    j, self.evaluate(test_data), n_test)
+            else:
+                print "Epoch {0} complete".format(j)
+\end{verbatim}
+\subsubsection{引数 $SGD$}
+\begin{description}
+  \item[１．$training_data$] ：トレーニングデータ
+  \item[２．$epochs$] ： バッチ学習回数
+  \item[３．$mini_batch_size$] ： ミニバッチサイズ
+  \item[４．$eta$] ：学習率
+  \item[５．$test_data$]  ：テストデータ
+\end{description}
+\subsubsection{戻値 $SGD$}
+標準出力にテスト結果「正解数／テストデータ数」を表示。
+\subsubsection{実行内容 $SGD$}
+
+\subsection{update\_mini\_batch(self, mini\_batch, eta)}
+\begin{verbatim}
+     def update_mini_batch(self, mini_batch, eta):
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        for x, y in mini_batch:
+\end{verbatim}
+\verb|            delta_nabla_b, delta_nabla_w = |{\Large \bf self.backprop(x, y)}
+\begin{verbatim}
+        　　nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+            nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+        self.weights = [w-(eta/len(mini_batch))*nw
+                        for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b-(eta/len(mini_batch))*nb
+                       for b, nb in zip(self.biases, nabla_b)]
+                     
+\end{verbatim}
+\subsubsection{引数 $update\_mini\_batch$}
+\begin{description}
+  \item [$mini_batch$] ：ミニバッチデータ。通常は出力レーヤーのニューロン数（分類数）と同程度の個数のデータ。
+  \item[$eta$] ：学習率　定め方の見当は・・・・・・
+\end{description}
+\subsubsection{戻値 $update\_mini\_batch$}
+メットワークの「重み（$self.weights$）」と「バイアス（$self.biases$）」を更新する
+\subsubsection{実行内容 $update\_mini\_batch$}
+backprop(x, y)によって、重みとバイアスの修正量(勾配）を受け取り、ネットワークの重みとバイアスを更新する。\\
+10回分の$\nabla_b, \nabla_w$をそれぞれに合計し、\\
+$self.weights = self.weights - \frac{学習率}{10} * 10回の合計重み勾配$ \\
+$self.biases = self.biases - \frac{学習率}{10} * 10回の合計バイアス勾配$\\
+で更新する。（勾配は数学用語。アルゴリズム的には、勾配下降させる「近似された微小修正量」といえる。）学習率は1.0ならば単なる10回の平均だが、通常は0.3程度の小さな値を設定する。\\
+\subsection{backprop(self, x, y)}
+\begin{verbatim}
+     def backprop(self, x, y):
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+\end{verbatim}
+
+        {\Large \bf \# feedforward}
+\begin{verbatim}
+        activation = x
+        activations = [x] # list to store all the activations, layer by layer
+        zs = [] # list to store all the z vectors, layer by layer
+        for b, w in zip(self.biases, self.weights):
+            z = np.dot(w, activation)+b
+            zs.append(z)
+            activation = sigmoid(z)
+            activations.append(activation)
+\end{verbatim}
+
+        {\Large \bf \# backward pass}\\
+\verb|　　　  #　出力レイヤーL|\\
+\verb|        delta = self.|{\Large \bf cost\_derivative(activations[-1], y)} \verb| * \|\\
+\verb|            |{\Large \bf sigmoid\_prime(zs[-1])}\\
+\verb|        nabla_b[-1] = delta|\\
+\verb|        nabla_w[-1] = |{\Large \bf np.dot(delta, activations[-2].transpose())}\\
+
+\begin{verbatim}
+        # 下記のループ変数lは第2章での記法と使用方法が若干異なる。
+        # l = 1は最終層を、l = 2は最後から2番目の層を意味する（以下同様）。
+        # 本書内での方法から番号付けのルールを変更したのは、
+        # Pythonのリストでの負の添字を有効活用するためである。
+\end{verbatim}
+\verb|        #  中間レイヤー|\\
+\verb|        for l in xrange(2, self.num_layers):|\\
+\verb|            z = zs[-l]|\\
+\verb|            sp = sigmoid_prime(z)}|\\
+\verb|            delta = |{\Large \bf np.dot(self.weights[-l+1].transpose(), delta) * sp}\\
+\verb|            nabla_b[-l] = delta|\\
+\verb|            nabla_w[-l] = |{\Large \bf np.dot(delta, activations[-l-1].transpose())}\\
+\verb|        return (nabla_b, nabla_w)|\\
+＞$backprop$*引数 \\
+\hspace{5mm}$x$ ：単一文字データ shape=(784, 1)\\
+\hspace{5mm}$y$ ：$x$の正解 shape=(10, 1)（正解のみ１、ほかは０の10分類リスト）\\
+＞$backprop$*戻値 \\
+\hspace{5mm}$nabla\_b$ ：$\nabla b$　$nabla\_b[s][j-1]$ $self.baiases$と同じ構造\\
+\hspace{5mm}$nabla\_w$ ：$\nabla w$  $nabla\_w[s][j-1][k-1]$　$self.weights$と同じ構造\\
+＞$backprop$*実行内容 \\
+update\_mini\_batch から単一の文字データと正解のセットx, yを受け取る。\\
+順伝搬のフェーズを実行し、入力〜出力各レイヤーの活性(入力層においては入力データを格納)をactivatinsに格納する。\\
+\\
+\# 出力レイヤーの逆伝播のフェーズ\\
+\verb|>>> delta = self.|{\Large \bf cost\_derivative(activations[-1], y)} \verb| * \|\\
+{\Large \bf sigmoid\_prime(zs[-1])}\\
+出力層での誤差$\delta^L$
+\begin{eqnarray}
+  \delta^L_j = \frac{\partial C}{\partial a^L_j} \sigma'(z^L_j).  \hspace{4.0cm}(BP1) \nonumber
+\end{eqnarray}
+\begin{eqnarray}
+  \delta^L = \nabla_a C \odot \sigma'(z^L).    \hspace{4.0cm}(BP1a) \nonumber
+\end{eqnarray}
+\begin{eqnarray}
+  \delta^L = (a^L-y) \odot \sigma'(z^L).  \hspace{4.0cm}(実装式) \nonumber
+\end{eqnarray}
+\\
+\verb|>>> nabla_b[-l] = delta| \hspace{10mm}  \\
+\verb|>>> nabla_w[-1] = |{\Large \bf np.dot(delta, activations[-2].transpose())}\\
+\begin{eqnarray}
+コスト関数の勾配(\nabla b) = \frac{\partial C}{\partial b^l_j} = \delta^l_j \hspace{10mm} \nonumber
+\end{eqnarray}
+\begin{eqnarray}
+コスト関数の勾配(\nabla w) = \frac{\partial C}{\partial w^l_{jk}} = a^{l-1}_k \delta^l_j \hspace{5mm}(Nielsen Chapter2 逆伝播アルゴリズム 5.出力) \nonumber
+\end{eqnarray}
+\# 中間レイヤーの逆伝播のフェーズ\\
+\verb|>for l in xrange(2, self.num_layers):|\\
+\verb|>>>   z = zs[-l]|\\
+\verb|>>>  sp = sigmoid_prime(z)}|\\
+\verb|>>>  delta = |{\Large \bf np.dot(self.weights[-l+1].transpose(), delta) * sp}\\
+\begin{eqnarray}
+ \hspace{5mm} &・&　l = 2 の場合　\delta^l = \left( w^L \odot \delta^L \right) * \sigma'(z^L) \nonumber　\\
+ \hspace{5mm} &・&　l = 3 の場合(3層の場合l=2まで)　\delta^l = \left( w^{(l+1)} \odot \delta^{(l+1)} \right) * \sigma'(z^{(l+1)}) \nonumber
+\end{eqnarray}
+\\
+\verb|[Nielsen本文では]|誤差を逆伝播： 各l=L−1,L−2,…,2l=L−1,L−2,…,2に対し、
+\begin{eqnarray}
+ \delta^{l} = ((w^{l+1})^T \delta^{l+1}) \odot \sigma'(z^{l})\hspace{5mm}(Nielsen Chapter2 逆伝播アルゴリズム 4.誤差を逆伝播) \nonumber
+\end{eqnarray}
+を計算する\\
+※　アマダール式$\odot$と縦ベクトルの積の使い分け\\
+ベクトルの場合 $\odot$　、個々のニューロンの計算の場合積で表現（していると思う。）\\
+\\
+\verb|>>> nabla_b[-l] = delta|\\
+\verb|>>> nabla_w[-l] = |{\Large \bf np.dot(delta, activations[-l-1].transpose())}\\
+\\
+出力レイヤーと同じく
+\begin{eqnarray}
+コスト関数の勾配(\nabla b) = \frac{\partial C}{\partial b^l_j} = \delta^l_j \hspace{10mm} \nonumber
+\end{eqnarray}
+\begin{eqnarray}
+コスト関数の勾配(\nabla w) = \frac{\partial C}{\partial w^l_{jk}} = a^{l-1}_k \delta^l_j \hspace{5mm}(Nielsen Chapter2 逆伝播アルゴリズム 5.出力) \nonumber
+\end{eqnarray}
+----(コードを自分で解釈した場合-------------------------------------------------------------
+\begin{eqnarray}
+\nabla w^l = \delta^l \odot a^{(l-1)}  \nonumber
+\end{eqnarray}
+によって出力層での誤差$\delta^L$を求める。
+\begin{eqnarray}
+  \delta^L_j = \frac{\partial C}{\partial a^L_j} \sigma'(z^L_j) \hspace{10mm}（偏微分）\nonumber \\ 
+  \delta^L = \nabla_a C \odot \sigma'(z^L)  \hspace{10mm}（行列表現）\nonumber \\
+  \delta^L = (a^L-y) \odot \sigma'(z^L) \hspace{10mm}(\nabla_a C = (a^L-y))（実装式） \nonumber \\
+  \left( \nabla_a C は偏微分\partial C / \partial a^L_j を並べたベクトル。出力活性に対するCの変化率\right)\nonumber
+\end{eqnarray}
+勾配$\nabla b = \delta^L$  \\
+%nabla_w[-1] = np.dot(delta, activations[-2].transpose())
+勾配$\nabla w = \delta^L \odot a^{(L-1)}$\\
+\verb|np.dot(delta, activations[-2].transpose())|\\
+コードが行っていることの数学表現 \dag \verb| |$\delta^L \odot a^{(L-1)}$\\
+\\
+順次レイヤーを遡り・・・（数式の検証後回し）・・・中間層の重みとバイアスの勾配を求めて返す。\\
+\subsection{evaluate(self, test\_data)}
+\begin{verbatim}
+     def evaluate(self, test_data):
+        """Return the number of test inputs for which the neural
+        network outputs the correct result. Note that the neural
+        network's output is assumed to be the index of whichever
+        neuron in the final layer has the highest activation."""
+        test_results = [(np.argmax(self.feedforward(x)), y)
+                        for (x, y) in test_data]
+        return sum(int(x == y) for (x, y) in test_results)
+\end{verbatim}
+◆$evaluate$, 引数 \\
+　test\_data… \\
+◆$evaluate$, 戻値 \\
+　正解なら１を返す。\\
+◆$evaluate$, 実行内容 \\
+　テストデータを用いて順伝播させ、出力レイヤーの値（をargmax処理したもの）と正解データが等しければ１を返す。
+\subsection{cost\_derivative(self, output\_activations, y)}
+\begin{verbatim}
+    def cost_derivative(self, output_activations, y):
+        """Return the vector of partial derivatives導関数（ベクトル勾配） \partial C_x /
+        \partial a for the output activations."""
+        return (output_activations-y)
+\end{verbatim}
+◆$cost\_derivative$, 引数 \\
+output\_activations…\\
+y…\\
+◆$cost\_derivative$, 戻値 $cost\_derivative$\\
+output\_activations-y…$\partial C_x / \partial a$　活性勾配\\
+◆$cost\_derivative$, 実行内容 $cost\_derivative$\\
+$\partial C_x / \partial a$（数学表現）, $\nabla_a C$（ベクトル表現）　二乗誤差関数の導関数（勾配）。
+\subsection{sigmoid(z)}
+\begin{verbatim}
+    def sigmoid(z):
+        """The sigmoid function."""
+        return 1.0/(1.0+np.exp(-z))
+\end{verbatim}
+◆$sigmoid$ ,引数 \\
+z…「当該レイヤーの重み付き出力値」\\
+◆$sigmoid$ ,戻値 \\
+zを活性化関数（シグモイド）に通した値。\\
+◆$sigmoid$ ,実行内容 \\
+「当該レイヤーの「重み付き出力」をシグモイド関数にかける。
+\subsection{sigmoid\_prime(z)}
+\begin{verbatim}
+    def sigmoid_prime(z):
+        """Derivative（導関数） of the sigmoid function."""
+        return sigmoid(z)*(1-sigmoid(z))
+\end{verbatim}
+◆$sigmoid\_prime$, 引数 \\
+z…「当該レイヤーの重み付き出力値」\\
+◆$sigmoid\_prime$, 戻値 \\
+シグモイド関数の微分係数\\
+◆$sigmoid\_prime$, 実行内容 \\
+シグモイド関数の導関数
+\\
+\\
+
+\textbf{\Large \theapart ：実行コードのトレース}　\\
+\refstepcounter{apart}
+\\
+\\
+\textbf{\Large \theapart ：ソースコード}
+\refstepcounter{apart}
+\begin{verbatim}
+
+"""
+network.py
+~~~~~~~~~~
+
+A module to implement the stochastic gradient descent learning
+algorithm for a feedforward neural network.  Gradients are calculated
+using backpropagation.  Note that I have focused on making the code
+simple, easily readable, and easily modifiable.  It is not optimized,
+and omits many desirable features.
+"""
+
+#### Libraries
+# Standard library
+import random
+
+# Third-party libraries
+import numpy as np
+
+class Network(object):
+
+    def __init__(self, sizes):
+        """The list ``sizes`` contains the number of neurons in the
+        respective layers of the network.  For example, if the list
+        was [2, 3, 1] then it would be a three-layer network, with the
+        first layer containing 2 neurons, the second layer 3 neurons,
+        and the third layer 1 neuron.  The biases and weights for the
+        network are initialized randomly, using a Gaussian
+        distribution with mean 0, and variance 1.  Note that the first
+        layer is assumed to be an input layer, and by convention we
+        won't set any biases for those neurons, since biases are only
+        ever used in computing the outputs from later layers."""
+        self.num_layers = len(sizes)
+        self.sizes = sizes
+        self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
+        self.weights = [np.random.randn(y, x)
+                        for x, y in zip(sizes[:-1], sizes[1:])]
+
+    def feedforward(self, a):
+        """Return the output of the network if ``a`` is input."""
+        for b, w in zip(self.biases, self.weights):
+            a = sigmoid(np.dot(w, a)+b)
+        return a
+
+    def SGD(self, training_data, epochs, mini_batch_size, eta,
+            test_data=None):
+        """Train the neural network using mini-batch stochastic
+        gradient descent.  The ``training_data`` is a list of tuples
+        ``(x, y)`` representing the training inputs and the desired
+        outputs.  The other non-optional parameters are
+        self-explanatory.  If ``test_data`` is provided then the
+        network will be evaluated against the test data after each
+        epoch, and partial progress printed out.  This is useful for
+        tracking progress, but slows things down substantially."""
+        if test_data: n_test = len(test_data)
+        n = len(training_data)
+        for j in xrange(epochs):
+            random.shuffle(training_data)
+            mini_batches = [
+                training_data[k:k+mini_batch_size]
+                for k in xrange(0, n, mini_batch_size)]
+            for mini_batch in mini_batches:
+                self.update_mini_batch(mini_batch, eta)
+            if test_data:
+                print "Epoch {0}: {1} / {2}".format(
+                    j, self.evaluate(test_data), n_test)
+            else:
+                print "Epoch {0} complete".format(j)
+
+    def update_mini_batch(self, mini_batch, eta):
+        """Update the network's weights and biases by applying
+        gradient descent using backpropagation to a single mini batch.
+        The ``mini_batch`` is a list of tuples ``(x, y)``, and ``eta``
+        is the learning rate."""
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        for x, y in mini_batch:
+            delta_nabla_b, delta_nabla_w = self.backprop(x, y)
+            nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+            nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+        self.weights = [w-(eta/len(mini_batch))*nw
+                        for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b-(eta/len(mini_batch))*nb
+                       for b, nb in zip(self.biases, nabla_b)]
+
+    def backprop(self, x, y):
+        """Return a tuple ``(nabla_b, nabla_w)`` representing the
+        gradient for the cost function C_x.  ``nabla_b`` and
+        ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
+        to ``self.biases`` and ``self.weights``."""
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        # feedforward
+        activation = x
+        activations = [x] # list to store all the activations, layer by layer
+        zs = [] # list to store all the z vectors, layer by layer
+        for b, w in zip(self.biases, self.weights):
+            z = np.dot(w, activation)+b
+            zs.append(z)
+            activation = sigmoid(z)
+            activations.append(activation)
+        # backward pass
+        delta = self.cost_derivative(activations[-1], y) * \
+            sigmoid_prime(zs[-1])
+        nabla_b[-1] = delta
+        nabla_w[-1] = np.dot(delta, activations[-2].transpose())
+        # Note that the variable l in the loop below is used a little
+        # differently to the notation in Chapter 2 of the book.  Here,
+        # l = 1 means the last layer of neurons, l = 2 is the
+        # second-last layer, and so on.  It's a renumbering of the
+        # scheme in the book, used here to take advantage of the fact
+        # that Python can use negative indices in lists.
+        for l in xrange(2, self.num_layers):
+            z = zs[-l]
+            sp = sigmoid_prime(z)
+            delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
+            nabla_b[-l] = delta
+            nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
+        return (nabla_b, nabla_w)
+
+    def evaluate(self, test_data):
+        """Return the number of test inputs for which the neural
+        network outputs the correct result. Note that the neural
+        network's output is assumed to be the index of whichever
+        neuron in the final layer has the highest activation."""
+        test_results = [(np.argmax(self.feedforward(x)), y)
+                        for (x, y) in test_data]
+        return sum(int(x == y) for (x, y) in test_results)
+
+    def cost_derivative(self, output_activations, y):
+        """Return the vector of partial derivatives \partial C_x /
+        \partial a for the output activations."""
+        return (output_activations-y)
+
+#### Miscellaneous functions
+def sigmoid(z):
+    """The sigmoid function."""
+    return 1.0/(1.0+np.exp(-z))
+
+def sigmoid_prime(z):
+    """Derivative of the sigmoid function."""
+    return sigmoid(z)*(1-sigmoid(z))
+
+
+
+
+
+配列参照の添字
+l(エル)は入力層を０（ゼロ）として出力側に向かって１，２と増える層番号
+lnは、第l層のノード番号
+バイアスと重みの配列は、層の各ノードごとに単精度浮動少数値（float32）をもつが、バイアス値は入力層には存在しない。また、重みは出力層にはそんざいしない。つまりバイアスと重みは同じ構造をしているのではない。
+
+バイアスは、self.baiases[l][0, ln] (l≠0  Lは出力層番号)で参照できる縦ベクトルで
+
+重みは、第l層(l≠L）に定義されるself.weight[l][(l+1)n, ln]であり層lに対して、
+[             (l+1)n, ln                 ]  で参照できる　
+層lごとに定義された  w = [ self.sizes[l+1], self.sizes[l] ]　の2次元配列　である。
+
+ノード番号lnの出力a(activation)[ ln ] は、 l≠L層に対して
+a[ (l + 1 )n ] = 内積(self.weight[ l ][ ( l + 1 )n , l 層 各ノード の重みを要素とする横ベクトル] 
+* a[ l 層 各ノードの出力を要素とする縦ベクトル ])  + b[ 0, ln ]
+左辺のa[ l( n + 1 )  ] と右辺のa[ l ])の関係から、
+[ (l+1)層のノードnに対する][ l層の出力a[ ln]に乗算する重みw]     の内積
+つまり「重み」は前層のN個のノードの出力は次層のM個のノードすべてに向かって送られ、送り出すときには「重みも個別に用意されている」のでN×M行列になる（配列にした時は添字の順番は[m,n]になる）
+
+最終出力層のノードの出力（活性）a[0, Ln]は、（N×M）個の重みと(N+M)個のバイアスを独立変数とする多変数関数と考えられる。出力aは入力層においてはノードに与えられた定数であり中間層、出力層においては重みとバイアスによって計算される結果であってこれを任意に操作することはできないから変数とは考えない。
+
+aは最終的に活性化関数によって評価された値が出力されるので、a[ 0, ln ]=活性化関数（a[ 0, ln ]）がl≠0 層の各ノードごとに次の層に出力される。
+
+誤差関数＝二乗誤差関数
+
+
+１．　net = network.Network([784, 30, 10])
+ネットワークのひな形を作成。
+引数（リスト）の[0]要素は「入力層」のノード数、[-1]要素は「出力層のクラス数、それ以外の中間の要素は、隠れ層のニューロン数。
+
+（１）　self.biases[l][0,n]
+中間層と出力層ごとに、バイアスは２次元のndarrayを縦ベクトルにしたもので作成される。
+[array([[ 0.3986539 ],
+	1列30要素
+       [-0.87581567]]), 
+array([[ 0.4577603 ],
+	1列10要素
+       [ 0.46283995]])]
+参照は、self.biases[l-1][0,n]でできる。lは入力層を０（ゼロ）として出力側に向かって１，２と増える層の番号、nは層のノード番号。
+
+（２）　self.weights[l][l層目の要素数][l+1層目の要素数]
+各ノードの出力(activation)に乗じる「重み」をn要素の横ベクトルで受けて側の数だけ用意する。行列。
+[array([[784要素　-0.49708123,  1.02719482, -0.32982976, ...],
+       30個
+	]), 
+array([[30要素　-0.0344678 , -0.78722372,  0.83997552, ...],
+	10個
+       ])]
+参照は、w = self,weightとして、入力層をl=0, 出力層に向かってl=1, l=2として、 self.sizes = [784, 30, 10]の場合、
+w[l][self.sizes[l+1][self.sizes[l]]　の配列であり
+w[l][l+1層のnode番号][l層のnode番号]で参照できる。
+具体的には
+l=0(入力層)は、　w[0][0〜29のnode番号][0〜783のnode番号]
+                                          　　　（ [30][784]  はndarrayなので、[l][30, 784]でも参照できるはず）
+l=1(中間層)は、　w[1][0〜9のnode番号][0〜29のnode番号]
+　　　　　　　　　　　　　　　　（ [10][30]  はndarrayなので、[l][10, 30]でも参照できるはず）
+
+２．　net.SGD(training_data, 30, 10, 3.0)
+確率的勾配下降法(SGD)で「重み」と「バイアス」を最適化する。
+（１）データの準備
+①random.shuffle(training_data)　トレーニングデータをシャッフルする。
+②ミニバッチの作成
+	mini_batches = [
+                training_data[k:k+mini_batch_size]
+                for k in xrange(0, n, mini_batch_size)]
+トレーニングデータ（50000個）を10個のバッチに分ける。
+
+（２）self.update_mini_batch(mini_batch, eta) 　学習率eta でself.weight, self.baias を更新するバッチ学習
+①ニューラルネットの構造と同じひな形を作成
+	nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+
+
+（３）　delta_nabla_b, delta_nabla_w = self.backprop(x, y)
+【順伝播】
+def backprop(self, x, y)の前半部分
+１文字（データ・正解）ごとの順伝播→逆伝播→ネットワーク（「重み」「バイアス」）の更新
+①順伝播・・・・ニューラルネットの構造と同じひな形を作成（update_mini_batchと同じ手順）
+	nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+②順伝播・・・・層を移動する
+        activation = x  #x 画像データ（28*28画素をシリアライズしたリストデータ）
+        activations = [x]  # list to store all the activations, layer by layer
+        zs = []  # list to store all the z vectors, layer by layer
+
+        z = np.dot(w, activation)+b
+z ”入力層以外の”、各層ごとの各ノードの重み付き出力（バイアスも付加済）　np.dot(w, activation)+b
+・・・2層目は、1列30要素。3層目（出力層）は、1列10要素（層のノード数分の変数要素を縦ベクトルにしたもの）
+w ”出力層以外の”、第l層目から(l+1)層目への「重み」
+・・・2層目は、784要素横ベクトルが縦に30個。層目（出力層）は、30要素横ベクトルが縦に10個。
+b ”入力層以外の”、第(l+1)層目に入ってくる信号(w（重み）*activation(l,n...l層目n番のノード))の和に最終的に付加されるバイアス
+・・・2層目は、1列30要素。3層目（出力層）は、1列10要素
+
+③順伝播・・・・到達ニューロンでのシグモイド関数
+	activation = sigmoid(z)
+	activations.append(activation)
+
+④出力層まで繰り返す。
+層		入力層
+層番号		'l=0
+nod数		sizes[0]
+		[0〜1
+		正規化
+		data]
+		activations = [x]
+値の参照	activations[l][0, sizes[0]]
+
+w[l][0][0] * act[0, 0]
+w[l][0][0] * act[1, 0]
+w[l][0][0] * act[2, 0]
+
+
+
+z = np.dot(w, activation)+b
+zs.append(z)
+activation = sigmoid(z)
+
+
+
+
+
+
+
+（４）逆伝播（backward pass）・・・中間層←出力層
+　def backprop(self, x, y):の後半
+①　delta = self.cost_derivative(activations[-1], y) * sigmoid_prime(zs[-1]) 
+　出力層の個々のニューロンでの誤差（２乗誤差関数の微分（勾配））。
+　　zsは、（３）②順伝播sigmoid評価前の重み付きバイアス付加出力zを層ごとにまとめたもの。.
+　（　sigmoid_prime(z) は sigmoid(z)*(1-sigmoid(z))　）
+
+②　nabla_b[-1] = delta  （①に等しい）
+　出力層のバイアス(b)の偏微分値（勾配）（Nielsenの式（BP1)　baias-voctor）
+  delta[L] = ( activation[L] − y ) ⊙ σ′( z[L] )
+  ※　y は正解値　 σ′は偏微分　
+
+③　nabla_w[-1] = np.dot(delta, activations[-2].transpose()) 
+　　(w * activation)の偏微分値（勾配）(Nielsenの式 BP2)
+  delta[l] = ( (w[l+1] )T * delta[l+1] ) ⊙ σ′( z[l] )
+　 出力層の誤差と前層の出力(activation)を転置して内積(dot)の形を取る。
+
+（５）逆伝播（backward pass）・・・入力層←中間層
+①中間層が2層位上存在する場合は、forループが働いて繰り返し層を遡る。
+	for l in xrange(2, self.num_layers):
+            z = zs[-l]
+            sp = sigmoid_prime(z)
+②
+	delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
+            nabla_b[-l] = delta
+            # [-l]番目の層の 「重みつき入力についての誤差」
+            nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
+
+任意のバイアスに関するコストの変化率(BP3)
+	∂-Cost / ∂-b[l][j] = δ-[l][j]
+
+任意の重みについてのコストの変化率(BP4)
+	∂-Cost / ∂-w[l][j,k] = activation[l−1][k] * δ[l][j]
+
+
+③　return (nabla_b, nabla_w)
+
+(6)update_mini_batchに戻る
+①1文字分の逆伝播をネットワークモデルに集積累計
+delta_nabla_b, delta_nabla_w = self.backprop(x, y)
+nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+
+②１０文字分のデータ集積でネットワークモデルを更新
+self.weights = [w-(eta/len(mini_batch))*nw
+                        for w, nw in zip(self.weights, nabla_w)]
+self.biases = [b-(eta/len(mini_batch))*nb
+                       for b, nb in zip(self.biases, nabla_b)]
+\end{verbatim}
+\end{document}
+
+

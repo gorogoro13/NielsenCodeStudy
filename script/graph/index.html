@@ -1,0 +1,98 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+http://onohp.com/sonota/zatuki/homepage/giji_frame/index.html
+-->
+<HTML>
+<HEAD>
+    <META http-equiv="X-UA-Compatible" content="IE=EmulateIE7;">
+    <META http-equiv="Content-Type" content="text/html; charset=Shift_JIS">
+    <META name="keywords" content="蝶,アゲハチョウ,シロチョウ,シジミチョウ,テングチョウ,マダラチョウ,タテハチョウ,ジャノメチョウ,セセリチョウ,四季の花,小さな虫たち,高山祭り,信州の自然">
+    <META name="description" content="スタイルシートを使って疑似フレームページを作成する方法">
+    <META name="GENERATOR" content="IBM WebSphere Studio Homepage Builder Version 10.0.4.0 for Windows">
+    <META http-equiv="Content-Style-Type" content="text/css">
+
+    <SCRIPT type="text/javascript">
+        <!--
+
+        function page_print(){
+            document.getElementById('print_style').href = "style_print.css";//-- スタイルシートの変更
+            print()   ;//-- 印刷
+            document.getElementById('print_style').href = "style_yoko.css" ;//-- スタイルシートを元に戻す
+        }
+
+        function left(){
+            var cc = ""
+            cc +="<A href='../../../../index.html' onfocus='this.blur()'><B>ホーム</B></A><BR><BR>"
+            cc +="<A href='javascript:page_print()' onfocus='this.blur()'><B>印　刷</B></A>"
+            cc +="<BR><H2>メニュー</H2><BR>"
+            cc +="メインエリアを上下にスクロールしてもメニューの部分は固定しています<BR>"
+            for(i=0 ; i<300 ; i++){
+                if((i % 20)==0){
+                    cc +="<BR>"
+                    cc += i + " 行目です"
+                }else{
+                    cc +="<BR>↓"
+                }
+            }
+            cc +="<BR><BR>ここが最終行です"
+            cc +="<BR><BR>"
+
+            document.write(cc)
+        }
+
+        function right(){
+            var cc = ""
+            cc +="<BR><H2>メインエリア</H2>"
+            cc +="<H3>疑似フレーム　左側固定サンプル</H3>"
+            cc +="<BR>この部分を上下にスクロールしてもメニューは固定しています<BR>"
+            cc +="またブラウザの「印刷」を実行してもすべての行は印刷されません<BR>"
+            cc +="印刷については　<B><A href='index.html' onfocus='this.blur()'>疑似フレームページの作成</A></B>　に解説してあります<BR>"
+            for(i=0 ; i<300 ; i++){
+                if((i % 20)==0){
+                    cc +="<BR>"
+                    cc += i + " 行目です"
+                }else{
+                    cc +="<BR>↓"
+                }
+            }
+            cc +="<BR><BR>ここが最終行です"
+            cc +="<BR><BR>"
+            document.write(cc)
+        }
+        //-->
+    </SCRIPT>
+
+    <!-- ページタイトル、キーワードと詳細 -->
+    <!-- InstanceBeginEditable name="Title" -->
+    <title>28by28 weights(Layer-02 node-j0001)</title>
+    <!-- CSS -->
+    <LINK rel="stylesheet" href="../css/style_yoko.css" type="text/css" id="print_style">
+</HEAD>
+<BODY>
+<DIV id="Header_area" align="center">
+    <A href="../../../../index.html" onfocus="this.blur()"><B>トップに戻る</B></A>
+    　　　　この部分にタイトルやメニューを表示します。　　　　
+    <A href="index.html" onfocus="this.blur()"><B>疑似フレームページの作成</B></A>
+    　　　　　<A href="javascript:page_print()" onfocus="this.blur()">印刷</A>
+</DIV>
+
+<DIV id="Left_area"  align="center">
+    <BR>
+    <SCRIPT type="text/javascript">
+        <!--
+        //--- 行数が３００行となるために Javascript で作成してあります
+        left()
+        //-->
+    </SCRIPT>
+</DIV>
+
+<DIV id="Main_area" align="center">
+    <SCRIPT type="text/javascript">
+        <!--
+        //--- 行数が３００行となるために Javascript で作成してあります
+        right()
+        //-->
+    </SCRIPT>
+</DIV>
+</BODY>

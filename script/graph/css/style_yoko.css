@@ -1,0 +1,29 @@
+/* 左側を固定 */
+
+BODY {
+    margin: 0;
+    padding: 0px 0px 0px 150px ;
+    /* 左側の横サイズを 150 ピクセルとします */
+}
+
+* html body{
+    overflow: auto;
+}
+
+div#Left_area {
+    position: fixed !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 150px;
+    /* BODY で設定した150ピクセルの値をセットします　*/
+    height: 100%;
+    background-color : #aaff66 ;
+    overflow: auto;
+    /* メニュー等の行が多い場合はスクロールバーを表示する */
+}
+
+* html div#Main_area{
+    height: 100%;
+    overflow: auto;
+}

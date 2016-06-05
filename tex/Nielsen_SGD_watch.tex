@@ -1,0 +1,79 @@
+%Nielsen_SGD_watch.tex
+\documentclass[11pt,a4paper,fleqn]{jsarticle}
+\usepackage[dvipdfmx]{graphicx}  
+% ######## measure #########
+% # mm = 1mm = 2.85pt      #
+% # cm = 10mm = 28.5pt     #
+% # in = 25.4mm = 72.27pt  #
+% # pt = 0.35mm = 1pt      #
+% # em = width of [M]      #
+% # ex = height of [x]     #
+% # zw = width of [Kanji]  #
+% # zh = height of [Kanji] #
+% ##########################
+% ##################### Portrait Setting #########################
+% # TOP = 1inch + ¥voffset + ¥topmargin + ¥headheight + ¥headsep #
+% #     = 1inch + 0pt + 4pt + 20pt + 18pt (default)              #
+% # BOTTOM = ¥paperheight - TOP -¥textheight                     #
+% ################################################################
+\setlength{\textheight}{\paperheight}   % 紙面縦幅を本文領域にする（BOTTOM=-TOP）
+\setlength{\topmargin}{4.6truemm}       % 上の余白を30mm（=1inch+4.6mm）に
+\addtolength{\topmargin}{-\headheight}  % 
+\addtolength{\topmargin}{-\headsep}     % ヘッダの分だけ本文領域を移動させる
+\addtolength{\textheight}{-60truemm}    % 下の余白も30mm（BOTTOM=-TOPだから+TOP+30mm）
+% #################### Landscape Setting #######################
+% # LEFT = 1inch + ¥hoffset + ¥oddsidemargin (¥evensidemargin) #
+% #      = 1inch + 0pt + 0pt                                   #
+% # RIGHT = ¥paperwidth - LEFT - ¥textwidth                    #
+% ##############################################################
+\setlength{\textwidth}{\paperwidth}     % 紙面横幅を本文領域にする（RIGHT=-LEFT）
+\setlength{\oddsidemargin}{-0.4truemm}  % 左の余白を25mm(=1inch-0.4mm)に
+\setlength{\evensidemargin}{-0.4truemm} % 
+\addtolength{\textwidth}{-50truemm}     % 右の余白も25mm（RIGHT=-LEFT）
+%
+\title{network.pyの振る舞いをビジュアライズする}
+\author{なかじま　ひでき}
+
+\date{\today}
+%参考サイト
+%01開発者がビッグデータ分析にPythonを使う時によくやる間違い
+%01 http://postd.cc/top-mistakes-python-big-data-analytics/
+%02どこまで速くできる？ 達人に学ぶPython超高速データ分析～PyData.Tokyo Meetup #4イベントレポート
+%02 https://codezine.jp/article/detail/8687
+\begin{document}
+\maketitle
+\section{書き出すデータ}
+\subsection{時系列}
+\subsubsection{入力}
+\begin{verbatim}
+・単一文字データ
+・ミニバッチ
+\end{verbatim}
+\subsubsection{順伝播}
+\verb| ・各層各ノードのz(重み付きバイアス) |$z^l_j$ \\
+\subsubsection{逆伝播}
+\verb|・| $\delta^l$ \\
+\verb|・baiases,weightsの更新| \\
+
+\section{データのシリアライズ}
+\subsection{description}
+\begin{enumerate}
+ \item description-num：descriptionの行数 
+ \item from-file:watchしているプログラムファイル 
+ \item line-num:watchした場所（行数） 
+ \item from-func:watchした関数名 
+ \item use-func:このデータファイルを出力した関数名 
+ \item use-func-opt:データファイルを出力した関数の第１引数 
+\end{enumerate}
+・・・\\
+0x end-opt:引数の終わり \\
+\section{ディレクトリとファイル名}
+\verb|・ディレクトリ　yyyymmdd_SGD|\\
+\verb|・readme.txt : サンプリングしたデータの概要|
+\begin{verbatim}
+ 
+\end{verbatim}
+\section{シリアライズせずPanddasを使う}
+\section{読み込み}
+\section{可視化}
+\end{document}

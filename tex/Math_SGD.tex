@@ -1,0 +1,103 @@
+% Math_SGD.tex
+\documentclass[11pt,a4paper,fleqn]{jsarticle}
+\usepackage[dvipdfmx]{graphicx} 
+%
+% ######## measure #########
+% # mm = 1mm = 2.85pt      #
+% # cm = 10mm = 28.5pt     #
+% # in = 25.4mm = 72.27pt  #
+% # pt = 0.35mm = 1pt      #
+% # em = width of [M]      #
+% # ex = height of [x]     #
+% # zw = width of [Kanji]  #
+% # zh = height of [Kanji] #
+% ##########################
+% ##################### Portrait Setting #########################
+% # TOP = 1inch + ¥voffset + ¥topmargin + ¥headheight + ¥headsep #
+% #     = 1inch + 0pt + 4pt + 20pt + 18pt (default)              #
+% # BOTTOM = ¥paperheight - TOP -¥textheight                     #
+% ################################################################
+\setlength{\textheight}{\paperheight}   % 紙面縦幅を本文領域にする（BOTTOM=-TOP）
+\setlength{\topmargin}{4.6truemm}       % 上の余白を30mm（=1inch+4.6mm）に
+\addtolength{\topmargin}{-\headheight}  % 
+\addtolength{\topmargin}{-\headsep}     % ヘッダの分だけ本文領域を移動させる
+\addtolength{\textheight}{-60truemm}    % 下の余白も30mm（BOTTOM=-TOPだから+TOP+30mm）
+% #################### Landscape Setting #######################
+% # LEFT = 1inch + ¥hoffset + ¥oddsidemargin (¥evensidemargin) #
+% #      = 1inch + 0pt + 0pt                                   #
+% # RIGHT = ¥paperwidth - LEFT - ¥textwidth                    #
+% ##############################################################
+\setlength{\textwidth}{\paperwidth}     % 紙面横幅を本文領域にする（RIGHT=-LEFT）
+\setlength{\oddsidemargin}{-0.4truemm}  % 左の余白を25mm(=1inch-0.4mm)に
+\setlength{\evensidemargin}{-0.4truemm} % 
+\addtolength{\textwidth}{-50truemm}     % 右の余白も25mm（RIGHT=-LEFT）
+%
+\title{Michael Nielsenの「ニューラルネットワークと深層学習」数式と配列}
+\author{なかじま　ひでき}
+
+\date{\today}
+\begin{document}
+\section{関数と導関数}
+\subsection{活性化関数}
+\subsubsection{σ … シグモイド関数}
+\begin{equation}
+  \sigma(z) \equiv \frac{1}{1+e^{-z}}.
+\end{equation}
+『より明確に表現すると、シグモイドニューロンの出力は、入力が$x_1$,$x_2$,…で、重みが$w_1$,$w_2$,…で、そしてバイアスがbのとき、次の形を取ります。』
+\begin{eqnarray}
+  \frac{1}{1+\exp(-\sum_j w_j x_j-b)}
+\end{eqnarray}
+\hspace{1.0cm} {\large ∵}  $\sigma(z) \equiv \frac{1}{1+e^{-z}}　= \frac{1}{1 + \exp{(-z)}} \hspace{1.0cm}$
+$z = \sum_{j} w_j x_j -b$\\
+    \begin{center}
+        \includegraphics[clip,width=8.5cm]{./sigmoid.png} \\
+        %\hspace{1.0cm}【C($V_1$, $V_2$)のグラフ】
+    \end{center}
+◆ $\exp{(x)}$は指数関数(exponential function) $e^x$を表す。 \\
+指数函数は指数法則と呼ばれる基本的な関係式
+\begin{eqnarray}
+  \exp{(x + y)} = \exp{(x)} \exp{(y)} \hspace{2.0cm} ∵ e^{(x + y)} = e^x e^y \nonumber
+\end{eqnarray}
+
+
+を満たすから、指数函数を冪乗の記法を以って $e^x$ と書くこともある。\\
+◆ eは、ネイピア数（Napier's constant） 自然対数の底。e = 2.71828 18284 59045 23536 02874 71352 …
+と続く超越数である。欧米ではオイラー数 (Euler's number) と呼ばれることもあるが、オイラーの定数 γ やオイラー数列とは異なる。
+
+ $e = \lim_{n \to \infty} \left( 1 + \frac{1}{n}  \right)^n$\hspace{1.0cm}
+ $\exp{(x)} = \lim_{n \to \infty} \left(  1 + \frac{x}{n}  \right)^n $
+\subsubsection{ロジスティック関数}
+　シグモイド関数の別名。MLP本ではこちらの名前で使われている。
+\subsubsection{ソフトマックス関数}
+\begin{eqnarray}
+ y_k \equiv z_k^L = \frac{\exp \left(u_k^L\right)}{\sum_{j=1}^K \exp \left(u_j^L\right)}
+\end{eqnarray}
+総和　$\sum_{k=1}^Ky_k$ = 1 になる。他の活性化関数の場合、ノードの出力$z_k$は同ノードへの総入力$u_k$のみから決定されるのに対し、この層の全ノードへの総入力$u_1,...,u_K$を元に決まる点で特殊。
+　
+\subsection{C … コスト関数}
+\subsubsection{2乗誤差関数}
+\begin{eqnarray}
+C = \frac{1}{2} \sum_j (y_j-a_j)^2
+\end{eqnarray}
+\begin{eqnarray}
+導関数
+\frac{\partial C}{\partial a^L_j} = (a_j-y_j)
+\end{eqnarray}
+\begin{eqnarray}
+勾配(\nabla b) = \frac{\partial C}{\partial b^l_j} = \delta^l_j \hspace{10mm} \nonumber
+\end{eqnarray}
+∇aC∇aC は偏微分∂C/∂aLj∂C/∂ajLを並べたベクトル
+\begin{eqnarray}
+勾配(\nabla w) = \frac{\partial C}{\partial w^l_{jk}} = a^{l-1}_k \delta^l_j \hspace{5mm}(Nielsen Chapter2 逆伝播アルゴリズム 5.出力) \nonumber
+\end{eqnarray}
+\subsubsection{交差エントロピー}
+
+\section{値計算式}
+\subsection{活性a}
+\begin{eqnarray}
+  a^{l}_j = \sigma\left( \sum_k w^{l}_{jk} a^{l-1}_k + b^l_j \right). \hspace{20mm}(Nielsen_23)
+\end{eqnarray}
+\subsection{重み付き入力z}
+ 
+ 
+\end{document}

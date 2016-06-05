@@ -1,0 +1,155 @@
+%\documentclass[11pt,a4paper]{jsarticle}
+\documentclass[11pt,a4paper]{jreport}
+%
+% ######## measure #########
+% # mm = 1mm = 2.85pt      #
+% # cm = 10mm = 28.5pt     #
+% # in = 25.4mm = 72.27pt  #
+% # pt = 0.35mm = 1pt      #
+% # em = width of [M]      #
+% # ex = height of [x]     #
+% # zw = width of [Kanji]  #
+% # zh = height of [Kanji] #
+% ##########################
+% ##################### Portrait Setting #########################
+% # TOP = 1inch + ¥voffset + ¥topmargin + ¥headheight + ¥headsep #
+% #     = 1inch + 0pt + 4pt + 20pt + 18pt (default)              #
+% # BOTTOM = ¥paperheight - TOP -¥textheight                     #
+% ################################################################
+\setlength{\textheight}{\paperheight}   % 紙面縦幅を本文領域にする（BOTTOM=-TOP）
+\setlength{\topmargin}{4.6truemm}       % 上の余白を30mm（=1inch+4.6mm）に
+\addtolength{\topmargin}{-\headheight}  % 
+\addtolength{\topmargin}{-\headsep}     % ヘッダの分だけ本文領域を移動させる
+\addtolength{\textheight}{-60truemm}    % 下の余白も30mm（BOTTOM=-TOPだから+TOP+30mm）
+% #################### Landscape Setting #######################
+% # LEFT = 1inch + ¥hoffset + ¥oddsidemargin (¥evensidemargin) #
+% #      = 1inch + 0pt + 0pt                                   #
+% # RIGHT = ¥paperwidth - LEFT - ¥textwidth                    #
+% ##############################################################
+\setlength{\textwidth}{\paperwidth}     % 紙面横幅を本文領域にする（RIGHT=-LEFT）
+\setlength{\oddsidemargin}{-0.4truemm}  % 左の余白を25mm(=1inch-0.4mm)に
+\setlength{\evensidemargin}{-0.4truemm} % 
+\addtolength{\textwidth}{-50truemm}     % 右の余白も25mm（RIGHT=-LEFT）
+%
+\title{ニューラルネットワークと深層学習}
+\author{著者: Michael Nielsen}
+
+\date{\today}
+
+
+\begin{document}
+\maketitle
+%
+%
+\chapter{第１章の見出し}
+\begin{verbatim}
+　"network.py"のトレースと解説をせよ。
+実行は
+net = network.Network([784, 30, 10])
+net.SGD(training_data, 30, 10, 3.0)
+としたものとする。
+\end{verbatim}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{net = network.Network([784, 30, 10])}
+   ：　　（第１章第１節の本文）
+   ここは第１段落．ここは第１段落．ここは第１段落．
+ここは第１段落．ここは第１段落．ここは第１段落．ここは第１段落．
+ここは第１段落．ここは第１段落．
+
+ここは第２段落．ここは第２段落．ここは第２段落．ここは第２段落．
+ここは第２段落．ここに２ｃｍの空白→\hspace{2cm}←ここに２ｃｍの空白．
+ここは第２段落．ここは第２段落．ここは第２段落．
+\subsection{第１章第１節第１項の見出し}
+   ：　　（第１章第１節第１項の本文）
+\section{第１章第２節の見出し}
+   ：　　（第１章第２節の本文）
+   \begin{itemize}
+    \item 一つ目の項目
+    \item 二つ目の項目
+    \item 三つ目の項目
+   \end{itemize}
+\begin{enumerate}
+\item 一つ目の項目
+\item 二つ目の項目
+\item 三つ目の項目
+\item 四つ目の項目
+\end{enumerate}
+\begin{description}
+\item[札幌ラーメン] 麺は太めのちぢれ麺であり，
+    醤油，塩，味噌などのバリエーションがあるが，
+    特に味噌ラーメンが重視されている．
+    具は一般的なものに加えてコーンを加えることが多い．
+    バターをのせることもある．
+\item[博多ラーメン] 細いストレート麺が主流で，
+    中でも長浜ラーメンの麺はかなり細い．
+    スープはトンコツが主体で，
+    色の白いスープが多い．
+    かなり脂っこいものもある．
+    付け合わせに紅しょうが・からし高菜を用いるようだ．
+\item[和歌山ラーメン] 細目の麺だが，
+    博多ラーメンほどではない．
+    わりと伸び気味にゆでるせいか，
+    スープで麺が太っていることもある．
+    スープはトンコツベースの醤油味．
+    いっしょに早すし（早熟れ鮨，あせ巻き寿司）を食べる．
+\end{description}
+\begin{quotation}
+ここは引用文の１つ目の段落．ここは引用文の１つ目の段落．
+ここは引用文の１つ目の段落．ここは引用文の１つ目の段落．
+
+ここは引用文の２つ目の段落．ここは引用文の２つ目の段落．
+ここは引用文の２つ目の段落．ここは引用文の２つ目の段落．
+\end{quotation}
+\begin{quote}
+ここは引用文の１行目の文章．ここは引用文の１行目の文章．
+ここは引用文の１行目の文章．ここは引用文の１行目の文章．
+
+ここは引用文の２行目の文章．ここは引用文の２行目の文章．
+ここは引用文の２行目の文章．ここは引用文の２行目の文章．
+\end{quote}
+\begin{center}
+この部分は \\
+中央に \\
+揃えられます．
+\end{center}
+この部分は詰め込みが行われる本文．
+この部分は詰め込みが行われる本文．
+\begin{verbatim}
+    ○┃×┃×
+    ━╋━╋━
+    ×┃○┃○
+    ━╋━╋━
+    ○┃○┃×
+\end{verbatim}
+この部分は詰め込みが行われる本文．
+\verb+そのまま表示する文字列+
+この部分は詰め込みが行われる本文．
+\[
+\left(
+\begin{array}{lcr}
+a     & x     & 1    \\
+a+b   & x+y   & 10   \\
+a+b+c & x+y+z & 100
+\end{array}
+\right)
+\]
+\begin{tabular}{p{3cm}cr}
+ラーメン & 並 & 500 円 \\
+ラーメン & 大 & 600 円 \\
+チャーシューメン & 並 & 600 円 \\
+チャーシューメン & 大 & 700 円
+\end{tabular}
+\begin{tabular}{||p{3cm}|c|r||} \hline
+ラーメン & 並 & 500 円 \\ \hline
+ラーメン & 大 & 600 円 \\ \hline
+チャーシューメン & 並 & 600 円 \\ \hline
+チャーシューメン & 大 & 700 円  \\ \hline
+\end{tabular}
+\begin{tabular}{|p{3cm}|c||r|} \hline
+\multicolumn{2}{|c||}{メニュー} & \multicolumn{1}{c|}{価格} \\ \hline
+ラーメン & 並 & 500 円 \\ \hline
+ラーメン & 大 & 600 円 \\ \hline
+チャーシューメン & 並 & 600 円 \\ \hline
+チャーシューメン & 大 & 700 円  \\ \hline
+\end{tabular}
+\end{document} 
