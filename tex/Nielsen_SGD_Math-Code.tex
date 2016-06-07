@@ -10,7 +10,7 @@
 \title{
 	\textbf{\Large  Michael Nielsen のニューラルネットワーク\\
 	\bigskip
-	数式とソースコード}\\
+	「逆伝播法」の数式とソースコード}\\
 	\bigskip
 }
 
@@ -23,10 +23,80 @@
 \renewcommand{\theapart}{\Alph{apart}}
 \setcounter{apart}{1}
 
-\textbf{\Large \theapart ：理論と実装}
-\refstepcounter{apart}
+\section{コスト関数}
+「逆伝播」はどのような誤差関数を採用するかが出発点になる。多クラス分類問題には二乗誤差関数を用いる（さらに学習精度を高めるためには交差エントロピー関数を用いるが、これは後回し）。
+\subsection{定義}
+\begin{eqnarray}  C(w,b) \equiv
+  \frac{1}{2n} \sum_x \| y(x) - a\|^2. \hspace{5mm}・・・「コスト関数 C 」と命名する。\nonumber \\
+  実際に計算できるのは1つの訓練例xに対する誤差　\frac{1}{2} \sum_j (y_j-a^L_j)^2.　\nonumber 
+\end{eqnarray}
+　  w はネットワーク中の全ての重み、 b は全バイアス、 n は訓練入力の総数、y(x)は、入力xの時の目標出力、a は入力が x の時にネットワークから出力されるベクトル、和は全ての訓練入力 x を表す。\\
+　この関数は、訓練入力 x の総和について表されている点が他の誤差関数と比べて特殊である。
+\subsection{コスト関数の条件}
+コスト関数の評価を通して逆伝播のコードを実装するにはいくつかの条件がある。実際に計算できるのはネットワーク全体ではなく（もしできたとしてもとてつもない計算負荷になる）、個々のニューロンだからだ。\\
+定義から
+\begin{itemize}
+\item 総和（ネットワークの誤差）の中の全項目（ニューロンにおける誤差）が非負の値で示せること
+\item C(w,b)$\simeq$0 の時は全訓練入力において 正解y(x) とテスト結果の出力aがほぼ等しくなる
+\item 滑らかな関数であること（結局のところ分類の正解数を上げることが目的だが、分類の正解数がネットワーク中の重みとバイアスの滑らかな関数にならないのでコスト関数を導出する）
+\end{itemize}
+\subsection{コスト関数に(さらに)必要な2つの仮定}
+・コスト関数は個々の訓練例xに対するコスト関数$C_x$の平均 $C = \frac{1}{n} \sum_x C_x$で書かれている。1つの訓練例に対するコスト関数を$C_x = \frac{1}{2} \|y-a^L \|^2$とすれば良いので 2乗コスト関数ではこの仮定が成立している。この仮定が必要となる理由は、逆伝播によって計算できるのは個々の訓練例に対する偏微分$\partial C_x / \partial w$、$\partial C_x / \partial b$だからです。\\
+・コスト関数はニューラルネットワークの出力の関数で書かれている。\\
+2乗コスト関数では1つの訓練例xに対する誤差は以下のように書ける。\\
+\begin{eqnarray}
+  C = C(a^L) = \frac{1}{2} \|y-a^L\|^2 = \frac{1}{2} \sum_j (y_j-a^L_j)^2. \hspace{10mm} （27）\nonumber
+\end{eqnarray}
+----(以下　Chapter1の内容)--------------------------------------------------------------------------------\\
+C($V_1$, $V_2$)としたときののグラフは次のようになる。
+    \begin{center}
+        \includegraphics[clip,width=8.5cm]{./valley.png} \\
+        %\hspace{1.0cm}【C($V_1$, $V_2$)のグラフ】
+    \end{center}
+ $v_1$ 方向に微小な量 $\Delta v_1$ 、 v2 方向に微小な量 $\Delta v_2$ だけボールを動かした時に何が起こるか考えてみましょう。計算の結果、 Cの微小変化$\Delta C$は次のようになります:
+\begin{eqnarray}
+  \Delta C \approx \frac{\partial C}{\partial v_1} \Delta v_1 +
+  \frac{\partial C}{\partial v_2} \Delta v_2.
+  \hspace{1.0cm} (２変数式の偏微分、３次元曲面上の近似解)
+\end{eqnarray}
+\\
+{\large 問：『$ \Delta{C}$が負の値; すなわち、ボールが谷を転がり降りていくような $\Delta{V_1}$ と $\Delta{V_2}$ を選ぶ方法を見つけましょう。』}\\
+ $\Delta v \equiv (\Delta v_1, \Delta v_2)^T$ と定義して（教科書的なベクトルの行列表現に習って縦ベクトルにします）
+\begin{eqnarray}
+  \nabla C \equiv \left( \frac{\partial C}{\partial v_1},
+  \frac{\partial C}{\partial v_2} \right)^T.
+\end{eqnarray}
+これまでの式からベクトル表現を使えば、
+\begin{eqnarray}
+  \Delta C \approx \nabla C \cdot \Delta v
+\end{eqnarray}
+η は小さい正のパラメータ(学習率として知られるもの)として、次の仮定を与えれば\\
+\begin{eqnarray}
+  \Delta v = -\eta \nabla C,
+\end{eqnarray}
 
-\section{ネットワークモデルと数学添字と配列添字}
-\subsection{ネットワークモデルと数学添字} 
+等式(9) から\\
+\hspace{1.0cm} $ \Delta C \approx \nabla C \cdot \Delta v = \nabla C \cdot -\eta \nabla C =  -\eta \|\nabla C\|^2$
+\hspace{1.0cm} ∴　 $\Delta C \approx -\eta \|\nabla C\|^2$ \\
+$\|
+\nabla C \|^2 \geq 0$ であることから $\Delta C \leq 0$ が成り立つため(10)の前提に従い vを変更する限り Cは常に減少し、決して増加しないことが保証されます(勿論(9) の等式が近似する限りです)。\\
+  Cの微小変化$\Delta C$の符号を保証するために2乗の項を導き出した副産物が学習率$\eta$の意味を持ち他の副産物は発生しない完璧な変形です。\\
+私たちは等式(10)を使い $\Delta v$の値を計算し、ボールの位置を v から次のように動かすのです:\\
+\begin{eqnarray}
+  v \rightarrow v' = v -\eta \nabla C.
+\end{eqnarray}
+
+
+勾配降下法の Cがちょうど二つの変数の関数である場合を説明しました。しかし、実際には、 Cが複数の関数であっても何も問題はありません。ここで Cが m個の変数 $v_1$,…,$v_m$の関数であると仮定します。この時、微小な変化 $\Delta v$ = (Δ$v_1$,…,Δ$v_m$)$^T$によってもたらされる Cの変化 $\Delta C$は\\
+ｍ次元であったとしても同じ式で表すことができる。\\
+\begin{itemize}
+ \item  Cの微小変化\hspace{0.5cm} $ \Delta C \approx \nabla C \cdot \Delta v$
+ \item  勾配 \hspace{0.5cm}  $\nabla C \equiv \left(\frac{\partial C}{\partial v_1}, \ldots \frac{\partial C}{\partial v_m}\right)^T$
+ \item  学習率を仮定(あるいは２乗の項を導くために) \hspace{0.5cm} $\Delta v = -\eta \nabla C$
+ \item  最小値への更新\hspace{0.5cm} $v \rightarrow v' = v-\eta \nabla C$
+\end{itemize}
+------------------------------------------------------------------------------------------------------\\
+
+
 
 \end{document}
