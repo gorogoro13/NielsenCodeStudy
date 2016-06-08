@@ -229,7 +229,12 @@ nabla_b[-1] = delta # 式（BP1)　baias-voctor の偏微分値
   \frac{\partial C}{\partial w^l_{jk}} = a^{l-1}_k \delta^l_j. \hspace{5mm} (BP4)  \nonumber 
 \end{eqnarray}
 \begin{verbatim}
-nabla_w[-1] = np.dot(delta, activations[-2].transpose()) # 重み付き入力wの
+nabla_w[-1] = np.dot(delta, activations[-2].transpose())
+\end{verbatim}
+\begin{eqnarray}
+  \nabla w =  \delta^L \odot a^{L-1} \hspace{5mm} (BP　)  \nonumber 
+\end{eqnarray}
+\begin{verbatim}
 tmp = activations[-2].transpose()
  delta(10, 1) 内積 activations[-2].transpose()(1, 30) = nabla_w[-1](10, 30)
  [[  1.2e-05]　✕　[[ カンマ無しで30個]]  =  array([[ -1.19532475e-10,...30個],
@@ -248,109 +253,51 @@ tmp = activations[-2].transpose()
         for l in xrange(2, self.num_layers):
             z = zs[-l]
             sp = sigmoid_prime(z)
-            sp = sigmoid_prime(z)
             delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
             nabla_b[-l] = delta
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
 
 （１） z = zs[-2] （中間層Layer-2 　の重み付き出力）
+\end{verbatim}
+\begin{eqnarray}
+  \ w^l =   \hspace{5mm} (BP　)  \nonumber 
+\end{eqnarray}
+\begin{verbatim}
 [[ -5.3752867 ]
- [ 12.82540147]
- [  6.76637396]
- [ 10.69130276]
- [  4.14687668]
- [ 12.96073309]
- [ -4.19472294]
- [ 19.1240105 ]
- [ -3.76950136]
- [  7.19934245]
- [  5.3457037 ]
- [ -4.93064081]
- [ -1.25870567]
- [  2.75292192]
- [ -5.17228314]
- [ 10.30750889]
- [ -2.62832347]
- [  8.85898991]
- [ -0.48229116]
- [ -0.57839184]
- [  5.9026621 ]
- [ -1.49164962]
- [ -1.87117331]
- [  1.73879123]
- [ 11.14371248]
- [-18.21047578]
- [ -5.14823046]
- [  3.73135868]
- [  8.8179347 ]
- [  2.38544102]]
-（２）　sp = sigmoid_prime(z) 
-[[  2.16324823e-03]
- [  4.18792345e-05]
- [  2.90671720e-04]
- [  6.24624821e-02]
- [  2.47936113e-01]
- [  4.84628007e-06]
- [  4.93533498e-04]
- [  9.12406593e-08]
- [  4.98758193e-03]
- [  2.06726174e-10]
- [  2.32099068e-10]
- [  2.48014641e-01]
- [  1.20874282e-05]
- [  4.74300169e-06]
- [  4.69749338e-02]
- [  5.40798289e-07]
- [  1.06366902e-03]
- [  9.32039345e-04]
- [  1.13079678e-02]
- [  6.90811426e-05]
- [  6.79014198e-07]
- [  3.89782530e-06]
- [  1.77901684e-02]
- [  1.93783836e-11]
- [  3.34170101e-05]
- [  1.56832704e-03]
- [  5.91304113e-02]
- [  2.02199806e-05]
- [  2.15094239e-01]
- [  4.13599956e-06]]
-
+  ..............
+ [30個　　　　]]
+（２）sp = sigmoid_prime(z)
+\end{verbatim}
+\begin{eqnarray}
+  \sigma^{'}(z) =   \hspace{5mm} (BP　)  \nonumber 
+\end{eqnarray}
+\begin{verbatim}
 （３）　delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
+\end{verbatim}
+\begin{eqnarray}
+\delta^l = ((w^{l+1})^T \delta^{l+1}) \odot \sigma'(z^l). \hspace{5mm} (BP2)  \nonumber \\
+\frac{\partial C}{\partial b^l_j} =  \delta^l_j. \hspace{5mm} (BP3)  \nonumber 
+\end{eqnarray}
+\begin{verbatim} 
    nabla_b[-l] = delta
+\end{verbatim}
+\begin{eqnarray}
+  \nabla b^l =  \delta^l  \hspace{5mm} (BP2,3からノード番号を省略したベクトル表現)  \nonumber 
+\end{eqnarray}
+\begin{verbatim} 
+nabla_b[-l] =   
 [[ -1.71281287e-06]
- [ -1.94419415e-04]
- [  3.68164074e-06]
- [ -4.55136021e-03]
- [  4.13069592e-10]
- [  1.59128365e-04]
- [  5.09142329e-05]
- [ -6.61944696e-04]
- [ -3.20555030e-03]
- [  1.77790053e-03]
- [  2.14241805e-02]
- [  2.23398209e-05]
- [  2.53264026e-11]
- [  1.31094721e-02]
- [ -1.22558625e-05]
- [ -1.96735986e-12]
- [  1.20703320e-03]
- [ -4.17050689e-08]
- [ -2.57196207e-03]
- [  1.39462200e-05]
- [  3.36858057e-03]
- [  1.55452212e-13]
- [ -1.66131886e-06]
- [  4.09813642e-02]
- [  5.18074555e-12]
- [  2.12642263e-04]
- [  8.82046381e-03]
- [  2.73245815e-04]
- [  2.89622574e-07]
- [ -6.04619847e-03]]
+  ..............
+ [30個　　　　]]
 
 （４）  nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
+\end{verbatim}
+\begin{eqnarray}
+\frac{\partial C}{\partial w^l_{jk}} = a^{l-1}_k \delta^l_j  \hspace{5mm} (BP4)  \nonumber 
+\end{eqnarray}
+
+\begin{verbatim} 
 nabla_w =
 [array([[ 0.,  0.,  0., ...,  0.,  0.,  0.],
        [ 0.,  0.,  0., ...,  0.,  0.,  0.],

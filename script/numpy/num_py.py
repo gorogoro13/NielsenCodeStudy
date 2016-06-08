@@ -73,5 +73,45 @@ reshape関数はその引数を修正された形状で返す一方で、resize�
     print "a.resize((2,6))".format(a.resize((2,6)))
     print "再整形操作において寸法が-1で与えられた場合、他の寸法は自動的に算出される："
     print "a.reshape(3,-1) = \n{0}".format(a.reshape(3,-1))
+
+def dot():
+    a = np.array([[ 1.],
+                  [ 2.],
+                  [ 3.],
+                  [ 4.],
+                  [ 5.],
+                  [ 6.]])
+    b = np.array([[1.,2.,3.,4.,5.,6.,7.,8.,9.,10]])
+    a_txt = """
+    a_txt = np.array([[ 1.],
+                  [ 2.],
+                  [ 3.],
+                  [ 4.],
+                  [ 5.],
+                  [ 6.]])
+    """
+    b_txt = """
+    b = np.array([[1.,2.,3.,4.,5.,6.,7.,8.,9.,10]])
+    """
+    print a_txt
+    print b_txt
+    print "np.dot(a,b) = \n{0}".format(np.dot(a,b))
+    c = np.array([[1.,2.,3.,4.,5.,6.]])
+    c_txt = """
+    c = np.array([1.,2.,3.,4.,5.,6.])
+    """
+    print c_txt
+    print "np.dot(c,a) = \n{0}".format(np.dot(c,a))
+    print "np.dot(a,c) = \n{0}".format(np.dot(a,c))
+    print "a.transpose() = {0}".format(a.transpose())
+    print "a.transpose()[0] = {0}".format(a.transpose()[0])
+    #print "np.dot(c,a.transpose()) = \n{0}".format(np.dot(c,a.transpose()))
+    #print "np.dot(a.transpose(),c) = \n{0}".format(np.dot(a.transpose(),c))
+    print "np.dot(c,a.transpose()[0]) = \n{0}".format(np.dot(c,a.transpose()[0]))
+    #print "np.dot(a.transpose()[0],c) = \n{0}".format(np.dot(a.transpose()[0],c))
+    #print "np.dot(b,a) = \n{0}".format(np.dot(b,a))
+
+
 #d_1()
-d_2()
+#d_2()
+dot()
