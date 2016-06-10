@@ -1,0 +1,78 @@
+\documentclass[11pt,a4j,fleqn]{jarticle}  
+
+%\usepackage[dvips]{graphicx}[dvipdfmx]
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{setspace} % setspaceパッケージのインクルード
+\begin{document}
+\title{
+	\textbf{\Large  Michael Nielsen のニューラルネットワーク\\
+	\bigskip
+	「逆伝播法」の4つの数式と証明}\\
+	\bigskip
+}
+\maketitle
+\begin{spacing}{1.5}
+\section{コスト関数}
+1つの訓練例$x$に対する誤差は以下のように書かれる\\
+\Large$C = \frac{1}{2} \|y-a^L\|^2 = \frac{1}{2} \sum_j (y_j-a^L_j)^2$\\
+\normalsize 自明のことではあるが$C$が出力層$L$にのみ定義されることが右辺の添字で表されている。\\
+添字$L$を省略し、実際に計算するこのできるj番目のニューロンの$C$を\\
+\Large$C(a_j)$ \normalsize または、$C(a^L_j)$　\normalsize とする。
+\subsection{$l$番目の層の$j$番目のニューロンの誤差$\delta^l_j$}
+\Large{$\delta^l_j \equiv \frac{\partial C}{\partial z^l_j}$}\normalsize　\hspace{5mm}（$z^l_j$を微動させたときの$C$の変化。勾配。）
+\newpage
+
+\section{BP1 出力層での誤差$\delta^L$に関する式}
+\Large$\delta^L_j = \frac{\partial C}{\partial a^L_j} \sigma'(z^L_j)$\hspace{5mm}…(BP1定義)\\
+\normalsize (証明)\\
+$j$番目のニューロンのコスト関数を$C(a＾L_j)$　とすると\\
+\Large $a^L_j = \sigma(z^L_j ) $ \\
+$z^L_j = Lz(a_k) = \sum_k w^{L-1}_k a^{L-1}_k + b^L_j $ \normalsize とおくと、\\ 
+\Large $a^L_j  = \sigma(Lz(a_k))$
+\\
+$\delta^L_j$の定義から\\
+$\delta^L_j = \{C_j(a^L_j)\}^{'}_ =  \{C_j(\sigma(Lz(a_k) )\}^{'}$ \normalsize 連鎖律を使うと\\
+\Large \hspace{25mm}$= C^{'}_j( \sigma(Lz(a_k)) \hspace{2mm} ・ \hspace{2mm}  \sigma^{'}(Lz(a_k))$
+\\
+ \normalsize $z^L_j = Lz(a_k)$なので、出力前層の添字を出力層のjに戻すと\\
+\Large $\delta^L_j = C^{'}_j(\sigma(z^L_j)) \hspace{2mm} ・ \hspace{2mm} \sigma^{'}(z^L_j) $ \normalsize  \hspace{20mm} $a^L_j = \sigma(z^L_j ) $なので、\\
+\Large $\delta^L_j = C^{'}_j(a^L_j) \hspace{2mm} ・ \hspace{2mm} \sigma^{'}(z^L_j) $ \\
+ \normalsize プログラムでは\\
+\verb|delta = self.cost_derivative(activations[-1], y) *  sigmoid_prime(zs[-1])| \\
+\verb|> cost_derivative(activations[-1], y) = ( return (activations[-1] - y ) )| \\
+\verb|> sigmoid_prime(zs[-1]) = (return sigmoid(zs[-1])*(1-sigmoid(zs[-1])) )|  \\                             
+\Large $\delta^{L}  = \nabla_a C \odot \sigma'(z^L)$ \hspace{5mm}(BP1 ベクトル表現) \\
+\Large $\delta^L_j = \frac{\partial C}{\partial a^L_j}\sigma'(z^L_j).$\hspace{5mm}(BP1定義) \\
+\newpage
+\section{誤差$\delta^l$の次層での誤差$\delta^{l+1}$に関する表式}
+ \normalsize 誤差$\delta^l$をその1つ後ろの層の誤差$\delta^{l+1}$を用いて表す\\
+\Large$\delta^l = ((w^{l+1})^T \delta^{l+1}) \odot \sigma'(z^l)$\hspace{5mm}(BP2定義)\\
+\normalsize （証明）\\
+$\delta$を出力側層の活性出力値$a^{l-1}_k$まで展開した式はPB1の出力層においては\\
+\Large $\delta^L_j = \{C_j(a^L_j)\}^{'}_ =  \{C_j(\sigma(Lz(a^{l-1}_k) )\}^{'}$ と書けたので、中間層に適用して\\
+\Large $\delta^l_j =  \{C_j(\sigma(lz(a^{l-1}_k) )\}^{'}$ \hspace{5mm} \normalsize (ただし、$lz(a^{l-1}_k) = \sum_k w^{l-1}_k a^{l-1}_k + b^l_j$)\\
+\Large \hspace{5mm}$= C^{'}_j( \sigma(lz(a^{l-1}_k)) \hspace{2mm} ・ \hspace{2mm}  \sigma^{'}(lz(a^{l-1}_k))$ \normalsize \hspace{5mm}$z^l_j = lz(a^{l-1}_k)$なので\\
+\Large \hspace{5mm}$= C^{'}_j( \sigma(z^l_j) \hspace{2mm} ・ \hspace{2mm}  \sigma^{'}(z^l_j)$ \normalsize \hspace{5mm}$z^L_j = \sum_k w^{L-1}_k a^{L-1}_k + b^L_j $なので\\
+
+
+\normalsize 誤差$\delta^l$をその1つ後ろの層の誤差$\delta^{l+1}$を用いて表す
+\begin{eqnarray}
+  \delta^l_j & = & \frac{\partial C}{\partial z^l_j}\nonumber  \hspace{5mm}(40)  \\
+  & = & \sum_k \frac{\partial C}{\partial z^{l+1}_k} \frac{\partial z^{l+1}_k}{\partial z^l_j} \hspace{5mm} (41) \nonumber \\
+  & = & \sum_k \frac{\partial z^{l+1}_k}{\partial z^l_j} \delta^{l+1}_k. \hspace{5mm} (42) \nonumber
+\end{eqnarray}
+最後の行は2つの項を交換し、第2項を$\delta^{l+1}_k$の定義で置き換えました。 最後の行の第1項を評価するために、次の式に注意します\\
+\begin{eqnarray}
+  z^{l+1}_k = \sum_j w^{l+1}_{kj} a^l_j +b^{l+1}_k = \sum_j w^{l+1}_{kj} \sigma(z^l_j) +b^{l+1}_k. \hspace{5mm} (43) \nonumber
+\end{eqnarray}
+この式を微分すると、次が得られます
+\begin{eqnarray}
+  \frac{\partial z^{l+1}_k}{\partial z^l_j} = w^{l+1}_{kj} \sigma'(z^l_j). \hspace{5mm} (44) \nonumber
+\end{eqnarray}
+この式で (42) を置き換えると、次の式が得られます
+\begin{eqnarray}
+  \delta^l_j = \sum_k w^{l+1}_{kj}  \delta^{l+1}_k \sigma'(z^l_j).  \hspace{5mm} (45) \nonumber
+\end{eqnarray}
+
+\end{spacing}
+\end{document}
